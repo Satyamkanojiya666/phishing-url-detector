@@ -1,0 +1,9 @@
+@echo off
+title AI Phishing Detector - Starting...
+cd /d "%~dp0"
+echo Installing dependencies (first run only)...
+python -m pip install -q -r requirements.txt
+echo Starting server, please wait...
+start "" http://127.0.0.1:5000
+python app.py
+pause

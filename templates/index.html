@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="matrix">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="Satyam Kanojiya">
+<title>AI Phishing & Scam Detector</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="icon" href="data:,">
+</head>
+<body>
+<canvas id="rain"></canvas>
+<div id="boot"><div id="bootText" class="cursor"></div><div class="skip">[ click to skip ]</div></div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="shield">🛡️</span>
+    <div>
+      <h1 class="glitch" data-text="PHISH//HUNTER">PHISH//HUNTER</h1>
+      <p>AI phishing &amp; scam detection · created by <b>Satyam Kanojiya</b></p>
+    </div>
+  </div>
+  <div class="top-actions">
+    <div class="stat-pill">Accuracy: <b>{{ m.accuracy }}%</b></div>
+    <button id="themeBtn" class="secondary icon-btn" title="Switch theme: Matrix / Cyber / Red-team">🟢</button>
+  </div>
+</header>
+
+<main>
+  <section class="panel" style="padding:12px 14px;">
+    <div class="console-bar"><span class="dots"><span></span><span></span><span></span></span><span>live_console — satyam@phishhunter</span></div>
+    <div id="console"></div>
+  </section>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="msgTab">💬 Message</button>
+    <button class="tab" data-tab="urlTab">🔗 URL Scanner</button>
+    <button class="tab" data-tab="batchTab">📂 Batch</button>
+  </nav>
+
+  <!-- MESSAGE -->
+  <section class="panel tab-pane active" id="msgTab">
+    <h2>Analyze a message</h2>
+    <textarea id="msgInput" rows="6" maxlength="5000" placeholder="Paste an SMS, email, or WhatsApp message here... (Ctrl+Enter to analyze)">Congratulations! You have won a $1000 gift card. Click http://amaz0n-prize.xyz to claim now before it expires!</textarea>
+    <div class="row">
+      <button id="analyzeBtn">🔍 Analyze Message</button>
+      <button id="clearBtn" class="secondary">Clear</button>
+      <span class="counter"><span id="charCount">0</span>/5000</span>
+    </div>
+    <div class="examples">
+      <span>Try:</span>
+      <button class="chip scam" data-text="URGENT: Your SBI account is blocked. Verify KYC immediately at http://sbi-kyc-update.xyz">Fake bank alert</button>
+      <button class="chip scam" data-text="Your OTP is 482913. Share this with our agent to process your refund.">OTP scam</button>
+      <button class="chip scam" data-text="Turant apna KYC update karo warna khata band ho jayega http://bit.ly/kyc-now">Hinglish scam</button>
+      <button class="chip safe" data-text="Hey, are we still meeting for lunch tomorrow at 1 pm?">Normal text</button>
+      <button class="chip safe" data-text="Your Amazon order has shipped and will arrive Thursday. Track it in the app.">Legit delivery</button>
+    </div>
+  </section>
+
+  <!-- URL -->
+  <section class="panel tab-pane" id="urlTab">
+    <h2>Scan a URL</h2>
+    <p class="hint">Checks IP hosts, shorteners, typosquatting (amaz0n), punycode, '@' tricks, suspicious TLDs and more. The link is never opened.</p>
+    <input id="urlInput" type="text" maxlength="2000" placeholder="http://paypa1-secure-login.xyz/verify" value="http://paypa1-secure-login.xyz/verify">
+    <div class="row"><button id="urlBtn">🔎 Scan URL</button></div>
+    <div id="urlResult" class="url-result" style="display:none;"></div>
+  </section>
+
+  <!-- BATCH -->
+  <section class="panel tab-pane" id="batchTab">
+    <h2>Batch analysis</h2>
+    <p class="hint">One message per line (max 200), or upload a .txt / .csv file (csv needs a <code>text</code> column).</p>
+    <textarea id="batchInput" rows="6" placeholder="Message 1&#10;Message 2&#10;Message 3"></textarea>
+    <div class="row">
+      <button id="batchBtn">⚡ Analyze All</button>
+      <label class="file-btn secondary">📎 Upload file<input type="file" id="batchFile" accept=".txt,.csv" hidden></label>
+      <button id="batchDl" class="secondary" style="display:none;">⬇ Download CSV</button>
+    </div>
+    <div id="batchSummary" class="batch-summary" style="display:none;"></div>
+    <div class="table-wrap">
+      <table id="batchTable" style="display:none;">
+        <thead><tr><th>Message</th><th>Verdict</th><th>Risk</th></tr></thead>
+        <tbody id="batchBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="panel result-panel" id="resultPanel" style="display:none;">
+    <h2>Result</h2>
+    <div class="verdict-row">
+      <div id="verdictBadge" class="verdict-badge">—</div>
+      <div class="gauge-wrap">
+        <svg viewBox="0 0 120 70" class="gauge">
+          <path d="M10,65 A55,55 0 0,1 110,65" fill="none" style="stroke:var(--border)" stroke-width="10"/>
+          <path id="gaugeArc" d="M10,65 A55,55 0 0,1 110,65" fill="none" stroke="#4ade80" stroke-width="10" stroke-dasharray="0 173"/>
+        </svg>
+        <div class="gauge-label"><span id="riskValue">0</span>%<br><small>risk</small></div>
+      </div>
+      <div class="submeters">
+        <div>AI model<div class="bar"><div id="mlBar" class="fill ml"></div></div><span id="mlVal">0%</span></div>
+        <div>Rule engine<div class="bar"><div id="ruleBar" class="fill rule"></div></div><span id="ruleVal">0%</span></div>
+      </div>
+    </div>
+    <div id="adviceBox" class="advice"></div>
+    <div id="termsBox" style="display:none;">
+      <h3>🧠 Words that raised the AI's suspicion</h3>
+      <div id="termsList" class="terms"></div>
+    </div>
+    <div id="iocBox" style="display:none;">
+      <h3>🕵️ Extracted indicators (IOCs)</h3>
+      <div id="iocList" class="iocs"></div>
+    </div>
+    <div id="urlsBox" style="display:none;">
+      <h3>🔗 Links found</h3>
+      <div id="urlsList"></div>
+    </div>
+    <div class="reasons-box">
+      <h3>Why this verdict?</h3>
+      <ul id="reasonsList"></ul>
+    </div>
+    <div class="feedback" id="feedbackBox">
+      <span>Was this verdict correct?</span>
+      <button class="secondary" id="fbYes">👍 Yes</button>
+      <button class="secondary" id="fbNo">👎 No</button>
+      <span id="fbMsg"></span>
+      <span style="margin-left:auto;display:flex;gap:8px;">
+        <button class="secondary" id="repTxt">⬇ Report .txt</button>
+        <button class="secondary" id="repJson">⬇ Report .json</button>
+      </span>
+    </div>
+  </section>
+
+  <!-- HISTORY -->
+  <section class="panel history-panel">
+    <div class="panel-head">
+      <h2>Recent checks <small>(saved in database)</small></h2>
+      <div class="row tight">
+        <a class="btn-link secondary" href="/api/export">⬇ Export CSV</a>
+        <button id="clearHistBtn" class="secondary">🗑 Clear</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Type</th><th>Input</th><th>Verdict</th><th>Risk</th></tr></thead>
+        <tbody id="historyBody">
+          <tr><td colspan="4" class="empty">Nothing analyzed yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="panel about-panel">
+    <h2>Model &amp; usage stats</h2>
+    <div class="cards">
+      <div class="mini-card"><span>{{ m.accuracy }}%</span>Hold-out accuracy</div>
+      <div class="mini-card"><span>{{ m.cv_accuracy }}%</span>5-fold CV accuracy</div>
+      <div class="mini-card"><span>{{ m.precision }}%</span>Precision</div>
+      <div class="mini-card"><span>{{ m.recall }}%</span>Recall</div>
+      <div class="mini-card"><span>{{ m.f1 }}%</span>F1 score</div>
+      <div class="mini-card"><span>{{ dataset_size }}</span>Training samples</div>
+    </div>
+    <h3>Your checks so far</h3>
+    <div id="distBar" class="dist"></div>
+    <p>Verdict = 70% TF-IDF + Logistic Regression score, blended with 30% rule-based risk.
+       Add your own data in <code>data/custom_dataset.csv</code> to improve accuracy.</p>
+  </section>
+</main>
+
+<footer>&lt;/&gt; Built with ☕ &amp; Python by <b>Satyam Kanojiya</b><br>PHISH//HUNTER — Flask + scikit-learn · MIT License © 2026</footer>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
